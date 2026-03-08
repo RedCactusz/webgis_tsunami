@@ -15,7 +15,7 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap, LayersControl } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useState } from "react";
 import type { GeoJsonObject } from "geojson";
@@ -53,6 +53,10 @@ export default function MapView() {
   // state untuk menyimpan GeoJSON batas administrasi
   const [batasGeoJson, setBatasGeoJson] = useState<GeoJsonObject | null>(null);
   const [bounds, setBounds] = useState<LatLngBoundsExpression | null>(null);
+  // bounds khusus untuk fokus awal ke batas administrasi
+  const [batasBounds, setBatasBounds] = useState<LatLngBoundsExpression | null>(null);
+  // state untuk layer patahan (java-fault)
+  const [faultGeoJson, setFaultGeoJson] = useState<GeoJsonObject | null>(null);
 
   useEffect(() => {
     // fetch file GeoJSON dari folder public
@@ -118,7 +122,21 @@ export default function MapView() {
           const layer = L.geoJSON(gj as GeoJsonObject);
           const b = layer.getBounds();
           if (b && (b as L.LatLngBounds).isValid && (b as L.LatLngBounds).isValid()) {
-            setBounds(b);
+            // simpan batas khusus untuk fit pertama kali ke batas administrasi
+            setBatasBounds(b);
+            // gunakan functional update untuk menggabungkan bounds tanpa dependency
+            setBounds((prev) => {
+              if (prev) {
+                try {
+                  const combined = (L.latLngBounds(prev as any) as L.LatLngBounds).extend(b);
+                  return combined;
+                } catch (err) {
+                  console.error("Error combining bounds:", err);
+                  return b;
+                }
+              }
+              return b;
+            });
           }
         } catch (e) {
           console.error("Error menghitung bounds GeoJSON:", e);
@@ -130,96 +148,152 @@ export default function MapView() {
       });
   }, []);
 
-  // style default untuk batas administrasi
-  const batasStyle = {
-    color: "#1e88e5",
-    weight: 2,
-    opacity: 0.9,
-    fillColor: "#90caf9",
-    fillOpacity: 0.2,
-  };
+  // fetch untuk java-fault.geojson (layer patahan)
+  useEffect(() => {
+    const url = "/data/geojson/java-fault.geojson";
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Gagal memuat GeoJSON patahan: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        // file ini sudah dalam CRS lon/lat (CRS84) sehingga tidak perlu reprojection
+        const gj = data as GeoJsonObject;
+        setFaultGeoJson(gj);
 
-  // Fungsi untuk menambahkan popup pada tiap fitur GeoJSON
-  function onEachFeature(feature: any, layer: L.Layer) {
-    try {
-      const props = (feature as any)?.properties || {};
-      // Properti yang ingin ditampilkan di popup (urutkan sesuai prioritas)
-      const fields = [
-        { key: "NAMOBJ", label: "Nama Kelurahan/Desa" },
-        { key: "WADMKD", label: "Kelurahan" },
-        { key: "WADMKK", label: "Kecamatan" },
-        { key: "WADMPR", label: "Provinsi" },
-        { key: "Penduduk", label: "Penduduk" },
-        { key: "REMARK", label: "Keterangan" },
-      ];
-
-      // Bangun HTML tabel untuk popup
-      let html = "<div style=\"min-width:180px\">";
-      html += `<h3 style=\"margin:0 0 8px 0; font-size:14px\">${props.NAMOBJ || props.WADMKD || props.WADMKK || "(nama tidak tersedia)"}</h3>`;
-      html += '<table style="font-size:13px">';
-      for (const f of fields) {
-        if (props[f.key] !== undefined && props[f.key] !== null && props[f.key] !== "") {
-          let value: any = props[f.key];
-          // format angka penduduk jika perlu
-          if (f.key === "Penduduk") {
-            const n = Number(String(value).replace(/[^0-9.-]+/g, ""));
-            value = Number.isFinite(n) ? n.toLocaleString("id-ID") : String(value);
+        // hitung bounds dan gabungkan ke bounds utama
+        try {
+          const layer = L.geoJSON(gj as GeoJsonObject);
+          const b2 = layer.getBounds();
+          if (b2 && (b2 as L.LatLngBounds).isValid && (b2 as L.LatLngBounds).isValid()) {
+            setBounds((prev) => {
+              if (prev) {
+                try {
+                  const combined = (L.latLngBounds(prev as any) as L.LatLngBounds).extend(b2);
+                  return combined;
+                } catch (err) {
+                  console.error("Error combining bounds:", err);
+                  return b2;
+                }
+              }
+              return b2;
+            });
           }
-          html += `<tr><td style="padding:2px 6px;color:#94a3b8">${f.label}</td><td style="padding:2px 6px;font-weight:600">${value}</td></tr>`;
+        } catch (err) {
+          console.error("Error menghitung bounds java-fault:", err);
         }
-      }
-      html += "</table></div>";
+      })
+      .catch((err) => console.error("Gagal memuat java-fault.geojson:", err));
+   }, []);
 
-      if (layer && typeof (layer as any).bindPopup === "function") {
-        (layer as any).bindPopup(html);
-      }
-    } catch (e) {
-      console.error("Error onEachFeature:", e);
-    }
-  }
+   // style default untuk batas administrasi
+   const batasStyle = {
+     color: "#1e88e5",
+     weight: 2,
+     opacity: 0.9,
+     fillColor: "#90caf9",
+     fillOpacity: 0.2,
+   };
 
-  return (
-    <div style={{ width: "100%", height: "100vh" }}>
-      <MapContainer
-        center={[-7.7956, 110.3695]}
-        zoom={10}
-        scrollWheelZoom={true}
-        style={{ width: "100%", height: "100%" }}
-      >
-        {/* =====================================================
-            BASEMAP
-            FUNGSI:
-            Mengambil tile peta dari OpenStreetMap.
-           ===================================================== */}
-        <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+   const faultStyle = {
+     color: "#e53935",
+     weight: 2,
+     opacity: 0.9,
+     dashArray: "6,4",
+   };
 
-        {/* =====================================================
-            MARKER CONTOH
-            FUNGSI:
-            Menampilkan titik contoh di peta.
-           ===================================================== */}
-        <Marker position={[-7.7956, 110.3695]}>
-          <Popup>
-            <strong>Shelter 1</strong>
-            <br />
-            Titik contoh untuk WebGIS tsunami.
-          </Popup>
-        </Marker>
+   // Fungsi untuk menambahkan popup pada tiap fitur GeoJSON
+   function onEachFeature(feature: any, layer: L.Layer) {
+     try {
+       const props = (feature as any)?.properties || {};
+       // Properti yang ingin ditampilkan di popup (urutkan sesuai prioritas)
+       const fields = [
+         { key: "NAMOBJ", label: "Nama Kelurahan/Desa" },
+         { key: "WADMKD", label: "Kelurahan" },
+         { key: "WADMKK", label: "Kecamatan" },
+         { key: "WADMPR", label: "Provinsi" },
+         { key: "Penduduk", label: "Penduduk" },
+         { key: "REMARK", label: "Keterangan" },
+       ];
 
-        {/* =====================================================
-            BOUNDARY GEOJSON
-            FUNGSI:
-            Jika data batas administrasi sudah dimuat, render layer GeoJSON dan fit bounds.
-           ===================================================== */}
-        {batasGeoJson ? (
-          <GeoJSON data={batasGeoJson} style={batasStyle} onEachFeature={onEachFeature} />
-        ) : null}
-        {bounds ? <FitBounds bounds={bounds} /> : null}
-      </MapContainer>
-    </div>
-  );
-}
+       // Bangun HTML tabel untuk popup
+       let html = "<div style=\"min-width:180px\">";
+       html += `<h3 style=\"margin:0 0 8px 0; font-size:14px\">${props.NAMOBJ || props.WADMKD || props.WADMKK || "(nama tidak tersedia)"}</h3>`;
+       html += '<table style="font-size:13px">';
+       for (const f of fields) {
+         if (props[f.key] !== undefined && props[f.key] !== null && props[f.key] !== "") {
+           let value: any = props[f.key];
+           // format angka penduduk jika perlu
+           if (f.key === "Penduduk") {
+             const n = Number(String(value).replace(/[^0-9.-]+/g, ""));
+             value = Number.isFinite(n) ? n.toLocaleString("id-ID") : String(value);
+           }
+           html += `<tr><td style="padding:2px 6px;color:#94a3b8">${f.label}</td><td style="padding:2px 6px;font-weight:600">${value}</td></tr>`;
+         }
+       }
+       html += "</table></div>";
+
+       if (layer && typeof (layer as any).bindPopup === "function") {
+         (layer as any).bindPopup(html);
+       }
+     } catch (e) {
+       console.error("Error onEachFeature:", e);
+     }
+   }
+
+   return (
+     <div style={{ width: "100%", height: "100vh" }}>
+       <MapContainer
+         center={[-7.7956, 110.3695]}
+         zoom={10}
+         scrollWheelZoom={true}
+         style={{ width: "100%", height: "100%" }}
+       >
+         {/* =====================================================
+             BASEMAP
+             FUNGSI:
+             Mengambil tile peta dari OpenStreetMap.
+            ===================================================== */}
+         <TileLayer
+           attribution='&copy; OpenStreetMap contributors'
+           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+         />
+
+         {/* =====================================================
+             MARKER CONTOH
+             FUNGSI:
+             Menampilkan titik contoh di peta.
+            ===================================================== */}
+         <Marker position={[-7.7956, 110.3695]}>
+           <Popup>
+             <strong>Shelter 1</strong>
+             <br />
+             Titik contoh untuk WebGIS tsunami.
+           </Popup>
+         </Marker>
+
+         {/* =====================================================
+             BOUNDARY GEOJSON
+             FUNGSI:
+             Jika data batas administrasi sudah dimuat, render layer GeoJSON dan fit bounds.
+            ===================================================== */}
+         <LayersControl position="topright">
+           <LayersControl.Overlay name="Batas Administrasi" checked>
+             {batasGeoJson ? (
+               <GeoJSON data={batasGeoJson} style={batasStyle} onEachFeature={onEachFeature} />
+             ) : null}
+           </LayersControl.Overlay>
+
+           <LayersControl.Overlay name="Patahan Jawa (java-fault.geojson)" checked>
+             {faultGeoJson ? (
+               <GeoJSON data={faultGeoJson} style={faultStyle} onEachFeature={onEachFeature} />
+             ) : null}
+           </LayersControl.Overlay>
+         </LayersControl>
+         {/* Fokus pertama kali hanya ke batas administrasi agar saat load peta langsung ke sana */}
+         {batasBounds ? <FitBounds bounds={batasBounds} /> : null}
+       </MapContainer>
+     </div>
+   );
+ }
 
