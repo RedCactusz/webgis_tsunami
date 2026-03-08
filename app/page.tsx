@@ -1,5 +1,3 @@
-"use client";
-
 // =====================================================
 // FILE: page.tsx
 // FUNGSI:
@@ -11,19 +9,13 @@
 // 4. Dashboard card statistik di bawah peta
 // =====================================================
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
+import MapClient from "@/components/map/MapClient";
 
-// =====================================================
-// DYNAMIC IMPORT
-// FUNGSI:
-// Leaflet harus dimuat di sisi client.
-// Karena itu komponen MapView di-import secara dynamic
-// dengan SSR dimatikan.
-// =====================================================
-const MapView = dynamic(() => import("@/components/map/MapView"), {
-  ssr: false,
-});
+// NOTE:
+// `MapView` adalah Client Component (memiliki "use client" di file komponennya),
+// jadi kita cukup mengimpornya langsung. Menggunakan `dynamic(..., { ssr: false })`
+// dari Server Component tidak diizinkan di Next.js dan menyebabkan error.
 
 // =====================================================
 // DATA CARD SEMENTARA
@@ -53,6 +45,8 @@ const dashboardCards = [
     description: "Status data dan analisis saat ini",
   },
 ];
+
+
 
 export default function Home() {
   return (
@@ -121,7 +115,7 @@ export default function Home() {
           </div>
 
           <div className="h-[70vh] w-full">
-            <MapView />
+            <MapClient />
           </div>
         </div>
 
