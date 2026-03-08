@@ -1,0 +1,27 @@
+{
+"type": "FeatureCollection",
+"features": [
+{
+"type": "Feature",
+"properties": {
+"nama": "Shelter 1",
+"keterangan": "Tempat evakuasi"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [110.3695, -7.7956]
+}
+},
+{
+"type": "Feature",
+"properties": {
+"nama": "Shelter 2",
+"keterangan": "Tempat evakuasi"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [110.3900, -7.7800]
+}
+}
+]
+}
