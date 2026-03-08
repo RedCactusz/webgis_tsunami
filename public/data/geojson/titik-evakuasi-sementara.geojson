@@ -1,0 +1,23 @@
+{
+"type": "FeatureCollection",
+"name": "C:\\Users\\RoufIndhra\\code\\sig\\webgis_tsunami\\public\\data\\geojson\\titik-evakuasi-sementara.geojson",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Masjid Al Huda", "id": "1" }, "geometry": { "type": "Point", "coordinates": [ 110.233926051802442, -7.968431336060471 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES BPP Srandakan", "id": "2" }, "geometry": { "type": "Point", "coordinates": [ 110.24130704830624, -7.960954562881717 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES SD Muh Gunturgeni", "id": "3" }, "geometry": { "type": "Point", "coordinates": [ 110.248343758032448, -7.963217674284 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Masjid Al FIrdaus", "id": "4" }, "geometry": { "type": "Point", "coordinates": [ 110.243332043993689, -7.969333055488694 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES SD Koripan", "id": "5" }, "geometry": { "type": "Point", "coordinates": [ 110.235880920155594, -7.976688799011977 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Lapangan Sorobayan", "id": "6" }, "geometry": { "type": "Point", "coordinates": [ 110.255317007793323, -7.969262754593522 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES SD Rejoniten", "id": "7" }, "geometry": { "type": "Point", "coordinates": [ 110.25006229098878, -7.984968569919274 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Kalurahan Gadingharjo", "id": "8" }, "geometry": { "type": "Point", "coordinates": [ 110.263849604984301, -7.979464343601669 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Lapangan Srigading", "id": "9" }, "geometry": { "type": "Point", "coordinates": [ 110.280636193603527, -7.975815294430978 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Pasar Sangkeh", "id": "10" }, "geometry": { "type": "Point", "coordinates": [ 110.286228681720772, -7.982290576581256 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Kalurahan Tirtosari", "id": "11" }, "geometry": { "type": "Point", "coordinates": [ 110.297655355721261, -7.983677532487192 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES SD Kanisius Tirtosari", "id": "12" }, "geometry": { "type": "Point", "coordinates": [ 110.294996955094945, -7.990426881973149 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Pasar Kuliner Ngangkruk", "id": "13" }, "geometry": { "type": "Point", "coordinates": [ 110.31638687256013, -7.978653343868984 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Bukit TPR Parangtritis", "id": "14" }, "geometry": { "type": "Point", "coordinates": [ 110.315214841919257, -7.996694806927496 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Syekh Bela Belu", "id": "15" }, "geometry": { "type": "Point", "coordinates": [ 110.32394628727873, -8.016357456729683 ] } },
+{ "type": "Feature", "properties": { "LAYER": "Unknown Point Feature", "Nama": "TES Syekh Maulana Maghribi", "id": "16" }, "geometry": { "type": "Point", "coordinates": [ 110.328169259296047, -8.019954537989278 ] } }
+]
+}

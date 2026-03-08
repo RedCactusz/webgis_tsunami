@@ -15,7 +15,7 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap, LayersControl } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap, LayersControl } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useState } from "react";
 import type { GeoJsonObject } from "geojson";
@@ -52,6 +52,10 @@ function FitBounds({ bounds }: { bounds: LatLngBoundsExpression }) {
 export default function MapView() {
   // state untuk menyimpan GeoJSON batas administrasi
   const [batasGeoJson, setBatasGeoJson] = useState<GeoJsonObject | null>(null);
+  // state untuk file fasilitas, jalan, dan titik evakuasi sementara
+  const [fasilitasGeoJson, setFasilitasGeoJson] = useState<GeoJsonObject | null>(null);
+  const [jalanGeoJson, setJalanGeoJson] = useState<GeoJsonObject | null>(null);
+  const [evakuasiGeoJson, setEvakuasiGeoJson] = useState<GeoJsonObject | null>(null);
   const [bounds, setBounds] = useState<LatLngBoundsExpression | null>(null);
   // bounds khusus untuk fokus awal ke batas administrasi
   const [batasBounds, setBatasBounds] = useState<LatLngBoundsExpression | null>(null);
@@ -186,6 +190,119 @@ export default function MapView() {
       .catch((err) => console.error("Gagal memuat java-fault.geojson:", err));
    }, []);
 
+      // fetch untuk fasilitas-bantul.geojson (Point)
+      useEffect(() => {
+        const url = "/data/geojson/fasilitas-bantul.geojson";
+        fetch(url)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Gagal memuat fasilitas: ${res.status}`);
+            return res.json();
+          })
+          .then((data) => {
+            const gj = data as GeoJsonObject;
+            setFasilitasGeoJson(gj);
+            try {
+              const layer = L.geoJSON(gj as GeoJsonObject);
+              const b = layer.getBounds();
+              if (b && (b as L.LatLngBounds).isValid && (b as L.LatLngBounds).isValid()) {
+                setBounds((prev) => {
+                  if (prev) {
+                    try {
+                      const combined = (L.latLngBounds(prev as any) as L.LatLngBounds).extend(b);
+                      return combined;
+                    } catch (err) {
+                      console.error("Error combining bounds (fasilitas):", err);
+                      return b;
+                    }
+                  }
+                  return b;
+                });
+              }
+            } catch (err) {
+              console.error("Error menghitung bounds fasilitas:", err);
+            }
+          })
+          .catch((err) => console.error("Gagal memuat fasilitas-bantul.geojson:", err));
+      }, []);
+
+      // fetch untuk jalan-bantul.geojson (LineString)
+      useEffect(() => {
+        const url = "/data/geojson/jalan-bantul.geojson";
+        fetch(url)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Gagal memuat jalan: ${res.status}`);
+            return res.json();
+          })
+          .then((data) => {
+            const gj = data as GeoJsonObject;
+            setJalanGeoJson(gj);
+            try {
+              const layer = L.geoJSON(gj as GeoJsonObject);
+              const b = layer.getBounds();
+              if (b && (b as L.LatLngBounds).isValid && (b as L.LatLngBounds).isValid()) {
+                setBounds((prev) => {
+                  if (prev) {
+                    try {
+                      const combined = (L.latLngBounds(prev as any) as L.LatLngBounds).extend(b);
+                      return combined;
+                    } catch (err) {
+                      console.error("Error combining bounds (jalan):", err);
+                      return b;
+                    }
+                  }
+                  return b;
+                });
+              }
+            } catch (err) {
+              console.error("Error menghitung bounds jalan:", err);
+            }
+          })
+          .catch((err) => console.error("Gagal memuat jalan-bantul.geojson:", err));
+      }, []);
+
+      // fetch untuk titik-evakuasi-sementara.geojson (Point)
+      useEffect(() => {
+        const url = "/data/geojson/titik-evakuasi-sementara.geojson";
+        fetch(url)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Gagal memuat evakuasi: ${res.status}`);
+            return res.json();
+          })
+          .then((data) => {
+            const gj = data as GeoJsonObject;
+            setEvakuasiGeoJson(gj);
+            try {
+              const layer = L.geoJSON(gj as GeoJsonObject);
+              const b = layer.getBounds();
+              if (b && (b as L.LatLngBounds).isValid && (b as L.LatLngBounds).isValid()) {
+                setBounds((prev) => {
+                  if (prev) {
+                    try {
+                      const combined = (L.latLngBounds(prev as any) as L.LatLngBounds).extend(b);
+                      return combined;
+                    } catch (err) {
+                      console.error("Error combining bounds (evakuasi):", err);
+                      return b;
+                    }
+                  }
+                  return b;
+                });
+              }
+            } catch (err) {
+              console.error("Error menghitung bounds evakuasi:", err);
+            }
+          })
+          .catch((err) => console.error("Gagal memuat titik-evakuasi-sementara.geojson:", err));
+      }, []);
+
+      // gunakan bounds sehingga tidak dianggap unused (debug/logging)
+      useEffect(() => {
+        if (bounds) {
+          // hanya debug, tapi memastikan variable digunakan
+          // console.debug("Combined bounds updated", bounds);
+        }
+      }, [bounds]);
+
    // style default untuk batas administrasi
    const batasStyle = {
      color: "#1e88e5",
@@ -201,6 +318,79 @@ export default function MapView() {
      opacity: 0.9,
      dashArray: "6,4",
    };
+
+  // Styles and helpers for the new layers
+  const fasilitasPointStyle = {
+    radius: 5,
+    fillColor: "#2e7d32",
+    color: "#1b5e20",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.9,
+  } as any;
+
+  const jalanStyle = {
+    color: "#ff9800",
+    weight: 2,
+    opacity: 0.8,
+  } as any;
+
+  const evakuasiPointStyle = {
+    radius: 6,
+    fillColor: "#1565c0",
+    color: "#0d47a1",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.95,
+  } as any;
+
+  function fasilitasPointToLayer(feature: any, latlng: any) {
+    return L.circleMarker(latlng, fasilitasPointStyle);
+  }
+
+  function evakuasiPointToLayer(feature: any, latlng: any) {
+    return L.circleMarker(latlng, evakuasiPointStyle);
+  }
+
+  // onEachFeature variants for the new layers (simpler templates)
+  function onEachFasilitas(feature: any, layer: L.Layer) {
+    try {
+      const p = feature?.properties || {};
+      const name = p.NAMOBJ || p.REMARK || `(id ${p.OBJECTID || "-"})`;
+      let html = `<div style="min-width:160px"><h4 style="margin:0 0 6px 0">${name}</h4>`;
+      if (p.FCODE) html += `<div style="font-size:13px;color:#64748b">${p.FCODE}</div>`;
+      if (p.REMARK) html += `<div style="font-size:13px;margin-top:6px">${p.REMARK}</div>`;
+      html += `</div>`;
+      if ((layer as any).bindPopup) (layer as any).bindPopup(html);
+    } catch (e) {
+      console.error("onEachFasilitas error", e);
+    }
+  }
+
+  function onEachJalan(feature: any, layer: L.Layer) {
+    try {
+      const p = feature?.properties || {};
+      const title = p.REMARK || `Jalan`;
+      let html = `<div style="min-width:180px"><strong style="font-size:13px">${title}</strong><table style="font-size:13px;margin-top:6px">`;
+      if (p.Panjang) html += `<tr><td style="color:#94a3b8;padding:2px 6px">Panjang</td><td style="font-weight:600;padding:2px 6px">${p.Panjang}</td></tr>`;
+      if (p.Lebar) html += `<tr><td style="color:#94a3b8;padding:2px 6px">Lebar</td><td style="font-weight:600;padding:2px 6px">${p.Lebar}</td></tr>`;
+      html += `</table></div>`;
+      if ((layer as any).bindPopup) (layer as any).bindPopup(html);
+    } catch (e) {
+      console.error("onEachJalan error", e);
+    }
+  }
+
+  function onEachEvakuasi(feature: any, layer: L.Layer) {
+    try {
+      const p = feature?.properties || {};
+      const name = p.Nama || p.nama || `(id ${p.id || "-"})`;
+      const html = `<div style="min-width:160px"><strong>${name}</strong></div>`;
+      if ((layer as any).bindPopup) (layer as any).bindPopup(html);
+    } catch (e) {
+      console.error("onEachEvakuasi error", e);
+    }
+  }
 
    // Fungsi untuk menambahkan popup pada tiap fitur GeoJSON
    function onEachFeature(feature: any, layer: L.Layer) {
@@ -244,7 +434,7 @@ export default function MapView() {
    return (
      <div style={{ width: "100%", height: "100vh" }}>
        <MapContainer
-         center={[-7.7956, 110.3695]}
+         center={[-7.999666378560566, 110.25504607288288]}
          zoom={10}
          scrollWheelZoom={true}
          style={{ width: "100%", height: "100%" }}
@@ -259,18 +449,7 @@ export default function MapView() {
            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
          />
 
-         {/* =====================================================
-             MARKER CONTOH
-             FUNGSI:
-             Menampilkan titik contoh di peta.
-            ===================================================== */}
-         <Marker position={[-7.7956, 110.3695]}>
-           <Popup>
-             <strong>Shelter 1</strong>
-             <br />
-             Titik contoh untuk WebGIS tsunami.
-           </Popup>
-         </Marker>
+         {/* Marker contoh dihapus — tidak diperlukan lagi */}
 
          {/* =====================================================
              BOUNDARY GEOJSON
@@ -289,6 +468,24 @@ export default function MapView() {
                <GeoJSON data={faultGeoJson} style={faultStyle} onEachFeature={onEachFeature} />
              ) : null}
            </LayersControl.Overlay>
+          
+          <LayersControl.Overlay name="Fasilitas Bantul">
+            {fasilitasGeoJson ? (
+              <GeoJSON data={fasilitasGeoJson} pointToLayer={fasilitasPointToLayer} onEachFeature={onEachFasilitas} />
+            ) : null}
+          </LayersControl.Overlay>
+
+          <LayersControl.Overlay name="Jalan Bantul">
+            {jalanGeoJson ? (
+              <GeoJSON data={jalanGeoJson} style={jalanStyle} onEachFeature={onEachJalan} />
+            ) : null}
+          </LayersControl.Overlay>
+
+          <LayersControl.Overlay name="Titik Evakuasi (sementara)" checked>
+            {evakuasiGeoJson ? (
+              <GeoJSON data={evakuasiGeoJson} pointToLayer={evakuasiPointToLayer} onEachFeature={onEachEvakuasi} />
+            ) : null}
+          </LayersControl.Overlay>
          </LayersControl>
          {/* Fokus pertama kali hanya ke batas administrasi agar saat load peta langsung ke sana */}
          {batasBounds ? <FitBounds bounds={batasBounds} /> : null}

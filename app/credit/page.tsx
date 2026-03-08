@@ -85,24 +85,9 @@ export default function CreditPage() {
             <h2 className="text-xl font-semibold text-slate-100">
               Author / Developer
             </h2>
-            <div className="mt-4 space-y-3 text-sm text-slate-300">
-              <p>
-                <span className="font-semibold text-slate-100">Nama:</span>{" "}
-                [Isi nama kamu di sini]
+              <p className="mt-4 text-sm leading-7 text-slate-300">
+              [...]         
               </p>
-              <p>
-                <span className="font-semibold text-slate-100">Institusi:</span>{" "}
-                [Isi institusi]
-              </p>
-              <p>
-                <span className="font-semibold text-slate-100">Tahun:</span>{" "}
-                2026
-              </p>
-              <p>
-                <span className="font-semibold text-slate-100">Kontak:</span>{" "}
-                [Isi email / kontak]
-              </p>
-            </div>
           </div>
 
           {/* =====================================================
@@ -133,10 +118,8 @@ export default function CreditPage() {
               Sumber Data / Lisensi
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-300">
-              Bagian ini bisa dipakai untuk mencantumkan sumber data spasial,
-              lisensi peta dasar, referensi penelitian, atau catatan metodologi
-              yang kamu gunakan dalam project WebGIS ini.
-            </p>
+              [...]         
+              </p>
           </div>
         </div>
       </section>
